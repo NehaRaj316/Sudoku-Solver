@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,8 +21,6 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,10 +28,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.claymorphic
 
 data class TechniqueItem(
     val title: String,
@@ -46,6 +48,9 @@ data class TechniqueItem(
 fun TechniquesScreen(
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
+    val cardBg = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
+
     val techniques = listOf(
         TechniqueItem(
             title = "1. Fundamental Sudoku Rules",
@@ -105,14 +110,18 @@ fun TechniquesScreen(
     ) {
         items(techniques.size) { index ->
             val item = techniques[index]
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .claymorphic(
+                        shape = RoundedCornerShape(16.dp),
+                        backgroundColor = cardBg,
+                        cornerRadiusDp = 16.dp,
+                        elevation = 4.dp
+                    )
+                    .padding(14.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+                Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -128,7 +137,7 @@ fun TechniquesScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = item.title,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Black,
                                 fontSize = 16.sp
                             )
                         }
@@ -140,7 +149,7 @@ fun TechniquesScreen(
                             Text(
                                 text = item.difficultyLevel,
                                 fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
@@ -151,7 +160,7 @@ fun TechniquesScreen(
                     Text(
                         text = item.subtitle,
                         fontSize = 12.5.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
 
@@ -166,13 +175,13 @@ fun TechniquesScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surface
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
                             text = item.ruleSummary,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                         )
                     }

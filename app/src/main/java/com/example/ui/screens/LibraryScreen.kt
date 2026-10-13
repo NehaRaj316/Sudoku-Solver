@@ -1,6 +1,6 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,23 +17,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Rule
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -52,6 +45,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.SavedPuzzleEntity
 import com.example.engine.PresetPuzzle
 import com.example.engine.PuzzleLibrary
+import com.example.ui.components.bouncyClayClick
+import com.example.ui.components.claymorphic
 import com.example.viewmodel.AppScreen
 import com.example.viewmodel.SudokuViewModel
 import java.text.SimpleDateFormat
@@ -72,7 +67,7 @@ fun LibraryScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Tab Row
+        // Clay Tab Row
         TabRow(
             selectedTabIndex = selectedTabIndex,
             modifier = Modifier.fillMaxWidth()
@@ -81,7 +76,7 @@ fun LibraryScreen(
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
-                    text = { Text(title, fontWeight = FontWeight.SemiBold) }
+                    text = { Text(title, fontWeight = FontWeight.Bold) }
                 )
             }
         }
@@ -130,13 +125,13 @@ fun LibraryScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "No saved puzzles yet",
-                            fontWeight = FontWeight.Bold,
+                            text = "No saved clay puzzles yet",
+                            fontWeight = FontWeight.Black,
                             fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Tap 'Save' in the Solver or Play screen to bookmark your boards and track history here.",
+                            text = "Tap 'Save' in the Solver or Play screen to preserve your sculpted boards and track history here.",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -171,16 +166,22 @@ fun PresetCard(
     onSolve: () -> Unit,
     onPlay: () -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
+    val isDark = isSystemInDarkTheme()
+    val cardBg = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
+            .claymorphic(
+                shape = RoundedCornerShape(16.dp),
+                backgroundColor = cardBg,
+                cornerRadiusDp = 16.dp,
+                elevation = 4.dp
+            )
+            .padding(14.dp)
             .testTag("library_preset_${preset.id}")
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -189,7 +190,7 @@ fun PresetCard(
                 Text(
                     text = preset.title,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Black
                 )
 
                 Surface(
@@ -199,7 +200,7 @@ fun PresetCard(
                     Text(
                         text = preset.difficulty.label,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
@@ -221,24 +222,52 @@ fun PresetCard(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(
-                    onClick = onSolve,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(36.dp)
+                        .claymorphic(
+                            shape = RoundedCornerShape(8.dp),
+                            backgroundColor = if (isDark) Color(0xFF332B25) else Color(0xFFF1EBE1),
+                            cornerRadiusDp = 8.dp,
+                            elevation = 2.dp
+                        )
+                        .bouncyClayClick { onSolve() }
+                        .padding(horizontal = 12.dp)
                 ) {
-                    Text("Analyze in Solver", fontSize = 12.sp)
+                    Text("Analyze in Solver", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Button(
-                    onClick = onPlay,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(36.dp)
+                        .claymorphic(
+                            shape = RoundedCornerShape(8.dp),
+                            backgroundColor = MaterialTheme.colorScheme.primary,
+                            cornerRadiusDp = 8.dp,
+                            elevation = 3.dp
+                        )
+                        .bouncyClayClick { onPlay() }
+                        .padding(horizontal = 12.dp)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Play Game", fontSize = 12.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Play Clay Game",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
@@ -251,18 +280,23 @@ fun SavedPuzzleCard(
     onOpen: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
     val dateStr = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(puzzle.dateCreated))
+    val cardBg = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
 
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
+    Box(
         modifier = Modifier
             .fillMaxWidth()
+            .claymorphic(
+                shape = RoundedCornerShape(16.dp),
+                backgroundColor = cardBg,
+                cornerRadiusDp = 16.dp,
+                elevation = 4.dp
+            )
+            .padding(14.dp)
             .testTag("saved_puzzle_${puzzle.id}")
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -272,7 +306,7 @@ fun SavedPuzzleCard(
                     Text(
                         text = puzzle.title,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Black
                     )
                     Text(
                         text = "$dateStr • ${puzzle.difficulty}",
@@ -308,18 +342,31 @@ fun SavedPuzzleCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                Button(
-                    onClick = onOpen,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(36.dp)
+                        .claymorphic(
+                            shape = RoundedCornerShape(8.dp),
+                            backgroundColor = MaterialTheme.colorScheme.primary,
+                            cornerRadiusDp = 8.dp,
+                            elevation = 3.dp
+                        )
+                        .bouncyClayClick { onOpen() }
+                        .padding(horizontal = 14.dp)
                 ) {
-                    Text("Open in Solver", fontSize = 12.sp)
+                    Text(
+                        "Open in Solver",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White
+                    )
                 }
             }
         }

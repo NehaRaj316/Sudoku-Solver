@@ -5,26 +5,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,22 +29,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Cell
-import com.example.ui.theme.CellConflictBgDark
-import com.example.ui.theme.CellConflictBgLight
-import com.example.ui.theme.CellConflictTextDark
-import com.example.ui.theme.CellConflictTextLight
-import com.example.ui.theme.CellCrosshairBgDark
-import com.example.ui.theme.CellCrosshairBgLight
-import com.example.ui.theme.CellGivenNumberDark
-import com.example.ui.theme.CellGivenNumberLight
-import com.example.ui.theme.CellMatchNumberBgDark
-import com.example.ui.theme.CellMatchNumberBgLight
-import com.example.ui.theme.CellSelectedBgDark
-import com.example.ui.theme.CellSelectedBgLight
-import com.example.ui.theme.CellStepHighlightBgDark
-import com.example.ui.theme.CellStepHighlightBgLight
-import com.example.ui.theme.CellUserNumberDark
-import com.example.ui.theme.CellUserNumberLight
+import com.example.ui.theme.ClayCellConflictBgDark
+import com.example.ui.theme.ClayCellConflictBgLight
+import com.example.ui.theme.ClayCellConflictTextDark
+import com.example.ui.theme.ClayCellConflictTextLight
+import com.example.ui.theme.ClayCellCrosshairBgDark
+import com.example.ui.theme.ClayCellCrosshairBgLight
+import com.example.ui.theme.ClayCellGivenNumberDark
+import com.example.ui.theme.ClayCellGivenNumberLight
+import com.example.ui.theme.ClayCellMatchNumberBgDark
+import com.example.ui.theme.ClayCellMatchNumberBgLight
+import com.example.ui.theme.ClayCellSelectedBgDark
+import com.example.ui.theme.ClayCellSelectedBgLight
+import com.example.ui.theme.ClayCellStepHighlightBgDark
+import com.example.ui.theme.ClayCellStepHighlightBgLight
+import com.example.ui.theme.ClayCellUserNumberDark
+import com.example.ui.theme.ClayCellUserNumberLight
 
 @Composable
 fun SudokuGrid(
@@ -62,18 +55,21 @@ fun SudokuGrid(
     modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
-    val borderColor = if (isDark) Color(0xFF475569) else Color(0xFF94A3B8)
-    val majorLineColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
-    val minorLineColor = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
-    val boardBackground = if (isDark) Color(0xFF1E293B) else Color(0xFFFFFFFF)
+    val slabBackground = if (isDark) Color(0xFF231D18) else Color(0xFFFFFFFF)
+    val majorGrooveColor = if (isDark) Color(0xFF6B5847) else Color(0xFF8C7B6C)
+    val minorLineColor = if (isDark) Color(0xFF382F27) else Color(0xFFE8DFD3)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
-            .border(2.dp, majorLineColor, RoundedCornerShape(12.dp))
-            .background(boardBackground)
+            .claymorphic(
+                shape = RoundedCornerShape(20.dp),
+                backgroundColor = slabBackground,
+                cornerRadiusDp = 20.dp,
+                elevation = 8.dp
+            )
+            .padding(4.dp)
             .testTag("sudoku_grid")
     ) {
         // Grid cells
@@ -98,11 +94,11 @@ fun SudokuGrid(
             }
         }
 
-        // Draw 3x3 major block lines overlay
+        // Draw 3x3 major block grooves & minor lines overlay
         Canvas(modifier = Modifier.fillMaxSize()) {
             val step = size.width / 9f
 
-            // Minor grid lines
+            // Minor grid lines (soft indented plasticine score lines)
             for (i in 1 until 9) {
                 if (i % 3 != 0) {
                     // Vertical
@@ -110,34 +106,34 @@ fun SudokuGrid(
                         color = minorLineColor,
                         start = Offset(i * step, 0f),
                         end = Offset(i * step, size.height),
-                        strokeWidth = 1.dp.toPx()
+                        strokeWidth = 1.2.dp.toPx()
                     )
                     // Horizontal
                     drawLine(
                         color = minorLineColor,
                         start = Offset(0f, i * step),
                         end = Offset(size.width, i * step),
-                        strokeWidth = 1.dp.toPx()
+                        strokeWidth = 1.2.dp.toPx()
                     )
                 }
             }
 
-            // Major grid lines
+            // Major block grooves (deep clay seams)
             for (i in 1..2) {
                 val pos = i * 3 * step
-                // Vertical
+                // Vertical groove shadow & highlight
                 drawLine(
-                    color = majorLineColor,
+                    color = majorGrooveColor,
                     start = Offset(pos, 0f),
                     end = Offset(pos, size.height),
-                    strokeWidth = 2.5.dp.toPx()
+                    strokeWidth = 3.dp.toPx()
                 )
-                // Horizontal
+                // Horizontal groove shadow & highlight
                 drawLine(
-                    color = majorLineColor,
+                    color = majorGrooveColor,
                     start = Offset(0f, pos),
                     end = Offset(size.width, pos),
-                    strokeWidth = 2.5.dp.toPx()
+                    strokeWidth = 3.dp.toPx()
                 )
             }
         }
@@ -154,51 +150,46 @@ fun SudokuCellComposable(
 ) {
     val isDark = isSystemInDarkTheme()
 
-    // Determine cell background color
+    // Determine clay cell color
     val targetBgColor = when {
-        cell.isConflicted -> if (isDark) CellConflictBgDark else CellConflictBgLight
-        isSelected -> if (isDark) CellSelectedBgDark else CellSelectedBgLight
-        cell.isStepTarget -> if (isDark) CellStepHighlightBgDark else CellStepHighlightBgLight
-        cell.isHighlightedValue -> if (isDark) CellMatchNumberBgDark else CellMatchNumberBgLight
-        isSameRowOrColOrBox -> if (isDark) CellCrosshairBgDark else CellCrosshairBgLight
+        cell.isConflicted -> if (isDark) ClayCellConflictBgDark else ClayCellConflictBgLight
+        isSelected -> if (isDark) ClayCellSelectedBgDark else ClayCellSelectedBgLight
+        cell.isStepTarget -> if (isDark) ClayCellStepHighlightBgDark else ClayCellStepHighlightBgLight
+        cell.isHighlightedValue -> if (isDark) ClayCellMatchNumberBgDark else ClayCellMatchNumberBgLight
+        isSameRowOrColOrBox -> if (isDark) ClayCellCrosshairBgDark else ClayCellCrosshairBgLight
         else -> Color.Transparent
     }
 
     val animatedBgColor by animateColorAsState(
         targetValue = targetBgColor,
         animationSpec = tween(durationMillis = 150),
-        label = "cell_bg"
+        label = "clay_cell_bg"
     )
 
     val textColor = when {
-        cell.isConflicted -> if (isDark) CellConflictTextDark else CellConflictTextLight
-        cell.isGiven -> if (isDark) CellGivenNumberDark else CellGivenNumberLight
-        else -> if (isDark) CellUserNumberDark else CellUserNumberLight
+        cell.isConflicted -> if (isDark) ClayCellConflictTextDark else ClayCellConflictTextLight
+        cell.isGiven -> if (isDark) ClayCellGivenNumberDark else ClayCellGivenNumberLight
+        else -> if (isDark) ClayCellUserNumberDark else ClayCellUserNumberLight
     }
-
-    val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxSize()
+            .clip(RoundedCornerShape(6.dp))
             .background(animatedBgColor)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true)
-            ) { onCellClick() }
+            .bouncyClayClick { onCellClick() }
             .testTag("cell_${cell.row}_${cell.col}")
     ) {
         if (!cell.isEmpty) {
             Text(
                 text = cell.value.toString(),
-                fontSize = 22.sp,
-                fontWeight = if (cell.isGiven) FontWeight.Bold else FontWeight.SemiBold,
+                fontSize = 23.sp,
+                fontWeight = if (cell.isGiven) FontWeight.Black else FontWeight.Bold,
                 color = textColor,
                 textAlign = TextAlign.Center
             )
         } else if (cell.notes.isNotEmpty()) {
-            // Render 3x3 pencil marks
             PencilNotesView(notes = cell.notes)
         }
     }
@@ -207,7 +198,7 @@ fun SudokuCellComposable(
 @Composable
 private fun PencilNotesView(notes: Set<Int>) {
     val isDark = isSystemInDarkTheme()
-    val noteColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val noteColor = if (isDark) Color(0xFFA89F91) else Color(0xFF786D5F)
 
     Column(
         modifier = Modifier
@@ -228,7 +219,7 @@ private fun PencilNotesView(notes: Set<Int>) {
                     Text(
                         text = if (notes.contains(num)) num.toString() else "",
                         fontSize = 8.5.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.Bold,
                         color = noteColor,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.weight(1f)

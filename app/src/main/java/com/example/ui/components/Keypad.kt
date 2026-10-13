@@ -1,9 +1,5 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
@@ -26,17 +21,12 @@ import androidx.compose.material.icons.filled.BorderColor
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,7 +35,7 @@ import com.example.model.InputMode
 
 @Composable
 fun Keypad(
-    digitCounts: Map<Int, Int>, // digit -> count on board (0..9)
+    digitCounts: Map<Int, Int>,
     inputMode: InputMode,
     canUndo: Boolean,
     canRedo: Boolean,
@@ -56,20 +46,17 @@ fun Keypad(
     onRedoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val haptic = LocalHapticFeedback.current
-    val isDark = isSystemInDarkTheme()
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Control Bar: Undo, Redo, Erase, Pencil/Pen toggle
+        // Control Bar: Undo, Redo, Erase, Pencil/Pen toggle in soft clay styling
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ControlActionButton(
+            ClayControlActionButton(
                 icon = Icons.AutoMirrored.Filled.Undo,
                 label = "Undo",
                 enabled = canUndo,
@@ -77,7 +64,7 @@ fun Keypad(
                 onClick = onUndoClick
             )
 
-            ControlActionButton(
+            ClayControlActionButton(
                 icon = Icons.AutoMirrored.Filled.Redo,
                 label = "Redo",
                 enabled = canRedo,
@@ -85,7 +72,7 @@ fun Keypad(
                 onClick = onRedoClick
             )
 
-            ControlActionButton(
+            ClayControlActionButton(
                 icon = Icons.Default.Backspace,
                 label = "Erase",
                 enabled = true,
@@ -93,14 +80,14 @@ fun Keypad(
                 onClick = onEraseClick
             )
 
-            // Pencil / Notes Toggle Button
-            PencilToggleButton(
+            // Clay Pencil / Notes Toggle Button
+            ClayPencilToggleButton(
                 inputMode = inputMode,
                 onClick = onToggleInputMode
             )
         }
 
-        // Digits 1 to 9
+        // Chunky Clay Digits 1 to 9
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -110,14 +97,11 @@ fun Keypad(
                 val count = digitCounts[digit] ?: 0
                 val isCompleted = count >= 9
 
-                DigitButton(
+                ClayDigitButton(
                     digit = digit,
                     count = count,
                     isCompleted = isCompleted,
-                    onClick = {
-                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                        onDigitClick(digit)
-                    },
+                    onClick = { onDigitClick(digit) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -126,7 +110,7 @@ fun Keypad(
 }
 
 @Composable
-fun DigitButton(
+fun ClayDigitButton(
     digit: Int,
     count: Int,
     isCompleted: Boolean,
@@ -135,49 +119,50 @@ fun DigitButton(
 ) {
     val isDark = isSystemInDarkTheme()
 
-    val containerBg = when {
-        isCompleted -> if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
-        else -> MaterialTheme.colorScheme.primaryContainer
+    // Distinct warm plasticine button color
+    val clayButtonColor = when {
+        isCompleted -> if (isDark) Color(0xFF26201B) else Color(0xFFE8DFD3)
+        else -> if (isDark) Color(0xFF382E25) else Color(0xFFFFFDF9)
     }
 
     val textColor = when {
-        isCompleted -> if (isDark) Color(0xFF64748B) else Color(0xFF94A3B8)
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+        isCompleted -> if (isDark) Color(0xFF6B5847) else Color(0xFFA89F91)
+        else -> if (isDark) Color(0xFFF97316) else Color(0xFFC2410C)
     }
 
     val countColor = when {
-        isCompleted -> if (isDark) Color(0xFF475569) else Color(0xFFCBD5E1)
-        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+        isCompleted -> if (isDark) Color(0xFF4D4034) else Color(0xFFC7BCAD)
+        else -> if (isDark) Color(0xFFB45309) else Color(0xFFD97706)
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = containerBg,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .defaultMinSize(minHeight = 56.dp)
+            .claymorphic(
+                shape = RoundedCornerShape(14.dp),
+                backgroundColor = clayButtonColor,
+                cornerRadiusDp = 14.dp,
+                elevation = if (isCompleted) 1.dp else 4.dp
+            )
+            .bouncyClayClick { onClick() }
             .testTag("digit_button_$digit")
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true)
-            ) { onClick() }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(vertical = 6.dp)
+            modifier = Modifier.padding(vertical = 5.dp)
         ) {
             Text(
                 text = digit.toString(),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Black,
                 color = textColor
             )
             Text(
                 text = "$count/9",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 9.5.sp,
+                fontWeight = FontWeight.Bold,
                 color = countColor
             )
         }
@@ -185,7 +170,7 @@ fun DigitButton(
 }
 
 @Composable
-fun ControlActionButton(
+fun ClayControlActionButton(
     icon: ImageVector,
     label: String,
     enabled: Boolean,
@@ -193,25 +178,24 @@ fun ControlActionButton(
     onClick: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
+    val bgColor = if (isDark) Color(0xFF26201B) else Color(0xFFF1EBE1)
     val contentColor = if (enabled) {
-        MaterialTheme.colorScheme.onSurface
+        if (isDark) Color(0xFFEDE4D8) else Color(0xFF42372E)
     } else {
-        if (isDark) Color(0xFF475569) else Color(0xFF94A3B8)
+        if (isDark) Color(0xFF524439) else Color(0xFFB5A99B)
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9),
+    Box(
         modifier = Modifier
             .defaultMinSize(minWidth = 64.dp, minHeight = 44.dp)
+            .claymorphic(
+                shape = RoundedCornerShape(12.dp),
+                backgroundColor = bgColor,
+                cornerRadiusDp = 12.dp,
+                elevation = if (enabled) 3.dp else 1.dp
+            )
+            .bouncyClayClick(enabled = enabled) { onClick() }
             .testTag(testTag)
-            .clickable(
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true)
-            ) { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
@@ -228,7 +212,7 @@ fun ControlActionButton(
             Text(
                 text = label,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
                 color = contentColor
             )
         }
@@ -236,37 +220,37 @@ fun ControlActionButton(
 }
 
 @Composable
-fun PencilToggleButton(
+fun ClayPencilToggleButton(
     inputMode: InputMode,
     onClick: () -> Unit
 ) {
     val isPencil = inputMode == InputMode.PENCIL
     val isDark = isSystemInDarkTheme()
 
+    // Vibrant plasticine cobalt when active!
     val bgColor = if (isPencil) {
-        MaterialTheme.colorScheme.secondary
+        if (isDark) Color(0xFF2563EB) else Color(0xFF3B82F6)
     } else {
-        if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
+        if (isDark) Color(0xFF26201B) else Color(0xFFF1EBE1)
     }
 
     val contentColor = if (isPencil) {
-        MaterialTheme.colorScheme.onSecondary
+        Color.White
     } else {
-        MaterialTheme.colorScheme.onSurface
+        if (isDark) Color(0xFFEDE4D8) else Color(0xFF42372E)
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = bgColor,
+    Box(
         modifier = Modifier
             .defaultMinSize(minWidth = 84.dp, minHeight = 44.dp)
+            .claymorphic(
+                shape = RoundedCornerShape(12.dp),
+                backgroundColor = bgColor,
+                cornerRadiusDp = 12.dp,
+                elevation = 4.dp
+            )
+            .bouncyClayClick { onClick() }
             .testTag("btn_pencil_mode")
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true)
-            ) { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -283,7 +267,7 @@ fun PencilToggleButton(
             Text(
                 text = if (isPencil) "Notes ON" else "Normal",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Black,
                 color = contentColor
             )
         }

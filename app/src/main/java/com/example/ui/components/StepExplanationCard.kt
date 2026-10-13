@@ -3,7 +3,7 @@ package com.example.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +20,9 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +42,9 @@ fun StepExplanationCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
+    val cardBg = if (isDark) Color(0xFF422006) else Color(0xFFFEF3C7) // Warm ochre clay
+
     AnimatedVisibility(
         visible = explanation != null,
         enter = fadeIn(),
@@ -52,19 +52,19 @@ fun StepExplanationCard(
         modifier = modifier
     ) {
         if (explanation != null) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .claymorphic(
+                        shape = RoundedCornerShape(18.dp),
+                        backgroundColor = cardBg,
+                        cornerRadiusDp = 18.dp,
+                        elevation = 5.dp
+                    )
+                    .padding(14.dp)
                     .testTag("step_explanation_card")
             ) {
-                Column(
-                    modifier = Modifier.padding(14.dp)
-                ) {
+                Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,20 +76,19 @@ fun StepExplanationCard(
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.padding(vertical = 2.dp)
+                                color = if (isDark) Color(0xFF78350F) else Color(0xFFF59E0B)
                             ) {
                                 Text(
                                     text = explanation.technique.title,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onTertiary,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
@@ -102,19 +101,19 @@ fun StepExplanationCard(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close hint",
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = "Suggested Move: Place ${explanation.value} at Row ${explanation.row + 1}, Col ${explanation.col + 1}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (isDark) Color(0xFFFEF3C7) else Color(0xFF78350F)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -122,7 +121,7 @@ fun StepExplanationCard(
                     Text(
                         text = explanation.explanation,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.9f),
+                        color = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E),
                         lineHeight = 18.sp
                     )
 
@@ -132,18 +131,25 @@ fun StepExplanationCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Button(
-                            onClick = onApplyStep,
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiary
-                            ),
-                            modifier = Modifier.testTag("btn_apply_step")
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .height(40.dp)
+                                .claymorphic(
+                                    shape = RoundedCornerShape(12.dp),
+                                    backgroundColor = if (isDark) Color(0xFFB45309) else Color(0xFFD97706),
+                                    cornerRadiusDp = 12.dp,
+                                    elevation = 3.dp
+                                )
+                                .bouncyClayClick { onApplyStep() }
+                                .padding(horizontal = 16.dp)
+                                .testTag("btn_apply_step")
                         ) {
                             Text(
-                                text = "Apply Number",
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiary
+                                text = "Mold Tile (Apply)",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 13.sp,
+                                color = Color.White
                             )
                         }
                     }

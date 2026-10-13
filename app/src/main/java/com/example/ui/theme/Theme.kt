@@ -1,70 +1,59 @@
 package com.example.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = IndigoPrimaryDark,
-    onPrimary = IndigoOnPrimaryDark,
-    primaryContainer = IndigoPrimaryContainerDark,
-    onPrimaryContainer = IndigoOnPrimaryContainerDark,
-    secondary = CyanSecondaryDark,
-    onSecondary = Color.Black,
-    secondaryContainer = CyanSecondaryContainerDark,
-    onSecondaryContainer = CyanOnSecondaryContainerDark,
-    tertiary = AmberTertiaryDark,
-    onTertiary = Color.Black,
-    tertiaryContainer = AmberTertiaryContainerDark,
-    onTertiaryContainer = AmberOnTertiaryContainerDark,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    surfaceVariant = SurfaceVariantDark,
-    outline = OutlineDark,
+    primary = ClayTerracottaDark,
+    onPrimary = Color(0xFF261004),
+    primaryContainer = Color(0xFF7C2D12),
+    onPrimaryContainer = Color(0xFFFFEDD5),
+    secondary = ClayCobaltDark,
+    onSecondary = Color(0xFF0F172A),
+    secondaryContainer = Color(0xFF1E3A8A),
+    onSecondaryContainer = Color(0xFFDBEAFE),
+    tertiary = ClayAmberDark,
+    onTertiary = Color(0xFF291800),
+    tertiaryContainer = Color(0xFF78350F),
+    onTertiaryContainer = Color(0xFFFEF3C7),
+    background = ClayCanvasDark,
+    surface = ClaySurfaceDark,
+    surfaceVariant = ClaySurfaceVariantDark,
+    outline = ClayOutlineDark,
     error = Color(0xFFF87171)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = IndigoPrimaryLight,
-    onPrimary = IndigoOnPrimaryLight,
-    primaryContainer = IndigoPrimaryContainerLight,
-    onPrimaryContainer = IndigoOnPrimaryContainerLight,
-    secondary = CyanSecondaryLight,
+    primary = ClayTerracottaLight,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFFFEDD5),
+    onPrimaryContainer = Color(0xFF7C2D12),
+    secondary = ClayCobaltLight,
     onSecondary = Color.White,
-    secondaryContainer = CyanSecondaryContainerLight,
-    onSecondaryContainer = CyanOnSecondaryContainerLight,
-    tertiary = AmberTertiaryLight,
+    secondaryContainer = Color(0xFFDBEAFE),
+    onSecondaryContainer = Color(0xFF1E3A8A),
+    tertiary = ClayAmberLight,
     onTertiary = Color.White,
-    tertiaryContainer = AmberTertiaryContainerLight,
-    onTertiaryContainer = AmberOnTertiaryContainerLight,
-    background = BackgroundLight,
-    surface = SurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    outline = OutlineLight,
+    tertiaryContainer = Color(0xFFFEF3C7),
+    onTertiaryContainer = Color(0xFF78350F),
+    background = ClayCanvasLight,
+    surface = ClaySurfaceLight,
+    surfaceVariant = ClaySurfaceVariantLight,
+    outline = ClayOutlineLight,
     error = Color(0xFFDC2626)
 )
 
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Set false to ensure our custom Sudoku indigo branding is preserved
+    dynamicColor: Boolean = false, // Keep false to preserve our custom clay animation aesthetics
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

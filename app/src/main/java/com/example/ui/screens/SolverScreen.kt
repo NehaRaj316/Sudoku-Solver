@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Casino
-import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,17 +37,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.engine.PuzzleLibrary
 import com.example.model.Difficulty
+import com.example.ui.components.ClayHeroCard
 import com.example.ui.components.Keypad
 import com.example.ui.components.SolverActionsBar
 import com.example.ui.components.SolverStatusBanner
 import com.example.ui.components.StepExplanationCard
 import com.example.ui.components.SudokuGrid
+import com.example.ui.components.bouncyClayClick
+import com.example.ui.components.claymorphic
 import com.example.viewmodel.SudokuViewModel
 
 @Composable
@@ -87,66 +88,49 @@ fun SolverScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Quick Toolbar: Presets, Generate, Clear, Save
+        // Claymation Stop-motion Studio Hero Banner
+        ClayHeroCard()
+
+        // Quick Clay Toolbar: Presets, Generate, Clear, Save
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilledTonalButton(
-                onClick = { showPresetsDialog = true },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .testTag("btn_open_presets")
-            ) {
-                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Presets", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
+            ClayToolbarButton(
+                icon = Icons.Default.FolderOpen,
+                label = "Presets",
+                modifier = Modifier.weight(1f),
+                testTag = "btn_open_presets",
+                onClick = { showPresetsDialog = true }
+            )
 
-            FilledTonalButton(
-                onClick = { showGenerateDialog = true },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .testTag("btn_open_generate")
-            ) {
-                Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Generate", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
+            ClayToolbarButton(
+                icon = Icons.Default.Casino,
+                label = "Generate",
+                modifier = Modifier.weight(1f),
+                testTag = "btn_open_generate",
+                onClick = { showGenerateDialog = true }
+            )
 
-            OutlinedButton(
-                onClick = { showClearConfirm = true },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .weight(0.9f)
-                    .height(40.dp)
-                    .testTag("btn_clear_board")
-            ) {
-                Icon(Icons.Default.DeleteSweep, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Clear", fontSize = 12.sp)
-            }
+            ClayToolbarButton(
+                icon = Icons.Default.DeleteSweep,
+                label = "Clear",
+                modifier = Modifier.weight(0.9f),
+                testTag = "btn_clear_board",
+                onClick = { showClearConfirm = true }
+            )
 
-            OutlinedButton(
+            ClayToolbarButton(
+                icon = Icons.Default.BookmarkBorder,
+                label = "Save",
+                modifier = Modifier.weight(0.9f),
+                testTag = "btn_save_board",
                 onClick = {
-                    saveTitleInput = "Puzzle #${System.currentTimeMillis() % 10000}"
+                    saveTitleInput = "Clay Puzzle #${System.currentTimeMillis() % 10000}"
                     showSaveDialog = true
-                },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .weight(0.9f)
-                    .height(40.dp)
-                    .testTag("btn_save_board")
-            ) {
-                Icon(Icons.Default.BookmarkBorder, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Save", fontSize = 12.sp)
-            }
+                }
+            )
         }
 
         // Status banner
@@ -158,7 +142,7 @@ fun SolverScreen(
             solutionCount = solutionCount
         )
 
-        // Sudoku 9x9 Grid
+        // Sudoku 9x9 Grid (Clay slab with tactile bouncy cells)
         SudokuGrid(
             cells = cells,
             selectedRow = selectedRow,
@@ -203,12 +187,12 @@ fun SolverScreen(
     if (showPresetsDialog) {
         AlertDialog(
             onDismissRequest = { showPresetsDialog = false },
-            title = { Text("Load Preset Puzzle", fontWeight = FontWeight.Bold) },
+            title = { Text("Load Preset Clay Puzzle", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PuzzleLibrary.presets.forEach { preset ->
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(12.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -236,7 +220,7 @@ fun SolverScreen(
                                     },
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Load", fontSize = 12.sp)
+                                    Text("Load", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -256,10 +240,10 @@ fun SolverScreen(
     if (showGenerateDialog) {
         AlertDialog(
             onDismissRequest = { showGenerateDialog = false },
-            title = { Text("Generate Sudoku", fontWeight = FontWeight.Bold) },
+            title = { Text("Generate Clay Sudoku", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Select puzzle difficulty to generate:")
+                    Text("Select difficulty tier for newly sculpted puzzle:")
                     Difficulty.values().forEach { diff ->
                         OutlinedButton(
                             onClick = {
@@ -269,7 +253,7 @@ fun SolverScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("${diff.label} (${diff.cluesCount} clues)")
+                            Text("${diff.label} (${diff.cluesCount} clues)", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -287,10 +271,10 @@ fun SolverScreen(
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
-            title = { Text("Save Current Board", fontWeight = FontWeight.Bold) },
+            title = { Text("Save Clay Board", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter a name for this puzzle to view later in your Saved Library:")
+                    Text("Enter a name for this handcrafted puzzle in your library:")
                     OutlinedTextField(
                         value = saveTitleInput,
                         onValueChange = { saveTitleInput = it },
@@ -306,7 +290,7 @@ fun SolverScreen(
                         showSaveDialog = false
                     }
                 ) {
-                    Text("Save")
+                    Text("Save to Clay Box")
                 }
             },
             dismissButton = {
@@ -321,8 +305,8 @@ fun SolverScreen(
     if (showClearConfirm) {
         AlertDialog(
             onDismissRequest = { showClearConfirm = false },
-            title = { Text("Clear Sudoku Board?", fontWeight = FontWeight.Bold) },
-            text = { Text("Do you want to reset all cells to empty, or only clear user-entered digits?") },
+            title = { Text("Reset Clay Board?", fontWeight = FontWeight.Black) },
+            text = { Text("Do you want to reset all clay cells to empty, or only roll back your user entries?") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -330,7 +314,7 @@ fun SolverScreen(
                         showClearConfirm = false
                     }
                 ) {
-                    Text("Clear All")
+                    Text("Roll Back All")
                 }
             },
             dismissButton = {
@@ -341,7 +325,7 @@ fun SolverScreen(
                             showClearConfirm = false
                         }
                     ) {
-                        Text("Reset User Entries")
+                        Text("Reset User Only")
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     TextButton(onClick = { showClearConfirm = false }) {
@@ -350,5 +334,51 @@ fun SolverScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun ClayToolbarButton(
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    val isDark = isSystemInDarkTheme()
+    val bgColor = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .height(42.dp)
+            .claymorphic(
+                shape = RoundedCornerShape(12.dp),
+                backgroundColor = bgColor,
+                cornerRadiusDp = 12.dp,
+                elevation = 3.dp
+            )
+            .bouncyClayClick { onClick() }
+            .testTag(testTag)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 6.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }

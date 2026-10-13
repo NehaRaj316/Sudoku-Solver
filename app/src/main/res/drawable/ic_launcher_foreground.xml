@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/ic_sudoku_icon"
+        android:drawable="@drawable/ic_clay_sudoku"
         android:gravity="center" />
 </layer-list>

@@ -6,11 +6,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DarkMode
@@ -93,16 +95,24 @@ fun SudokuApp(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        text = when (currentScreen) {
-                            AppScreen.SOLVER -> "Sudoku Solver"
-                            AppScreen.PLAY -> "Sudoku Play"
-                            AppScreen.LIBRARY -> "Puzzle Library"
-                            AppScreen.TECHNIQUES -> "Solving Guide"
-                        },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 19.sp
-                    )
+                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                        Text(
+                            text = when (currentScreen) {
+                                AppScreen.SOLVER -> "Clay Sudoku Solver"
+                                AppScreen.PLAY -> "Clay Sudoku Play"
+                                AppScreen.LIBRARY -> "Clay Puzzle Library"
+                                AppScreen.TECHNIQUES -> "Clay Solving Guide"
+                            },
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Stop-Motion Plasticine Studio",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 },
                 actions = {
                     IconButton(

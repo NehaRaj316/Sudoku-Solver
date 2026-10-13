@@ -1,6 +1,6 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,14 +24,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,13 +41,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Difficulty
 import com.example.ui.components.Keypad
 import com.example.ui.components.StepExplanationCard
 import com.example.ui.components.SudokuGrid
+import com.example.ui.components.bouncyClayClick
+import com.example.ui.components.claymorphic
 import com.example.viewmodel.SudokuViewModel
 
 @Composable
@@ -76,10 +71,13 @@ fun PlayScreen(
 
     var showNewGameDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val isDark = isSystemInDarkTheme()
 
     val minutes = timerSeconds / 60
     val seconds = timerSeconds % 60
     val timeFormatted = "%02d:%02d".format(minutes, seconds)
+
+    val hudBg = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
 
     Column(
         modifier = modifier
@@ -88,22 +86,24 @@ fun PlayScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Play HUD Header: Difficulty, Timer, Mistakes, New Game
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            modifier = Modifier.fillMaxWidth()
+        // Clay Play HUD Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .claymorphic(
+                    shape = RoundedCornerShape(16.dp),
+                    backgroundColor = hudBg,
+                    cornerRadiusDp = 16.dp,
+                    elevation = 4.dp
+                )
+                .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Difficulty Badge
+                // Difficulty Clay Badge
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
@@ -111,7 +111,7 @@ fun PlayScreen(
                     Text(
                         text = playDifficulty.label,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
@@ -129,14 +129,14 @@ fun PlayScreen(
                             imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Toggle Timer",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(19.dp)
                         )
                     }
                     Text(
                         text = timeFormatted,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -154,25 +154,45 @@ fun PlayScreen(
                     Text(
                         text = "Mistakes: $mistakesCount",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = if (mistakesCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 // New Game Button
-                FilledTonalButton(
-                    onClick = { showNewGameDialog = true },
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(34.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(34.dp)
+                        .claymorphic(
+                            shape = RoundedCornerShape(8.dp),
+                            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                            cornerRadiusDp = 8.dp,
+                            elevation = 2.dp
+                        )
+                        .bouncyClayClick { showNewGameDialog = true }
+                        .padding(horizontal = 8.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text("New", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            "New",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
 
-        // Sudoku Grid
+        // Sudoku Grid (Tactile bouncy clay)
         SudokuGrid(
             cells = cells,
             selectedRow = selectedRow,
@@ -180,27 +200,35 @@ fun PlayScreen(
             onCellClick = { r, c -> viewModel.selectCell(r, c) }
         )
 
-        // Hint bar & Step Explanation
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Clay Smart Hint Button
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .claymorphic(
+                    shape = RoundedCornerShape(12.dp),
+                    backgroundColor = if (isDark) Color(0xFF78350F) else Color(0xFFFEF3C7),
+                    cornerRadiusDp = 12.dp,
+                    elevation = 3.dp
+                )
+                .bouncyClayClick { viewModel.requestStep() }
+                .testTag("btn_play_hint")
         ) {
-            FilledTonalButton(
-                onClick = { viewModel.requestStep() },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp)
-                    .testTag("btn_play_hint")
-            ) {
-                Icon(Icons.Default.Lightbulb, contentDescription = null, modifier = Modifier.size(18.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Lightbulb,
+                    contentDescription = null,
+                    tint = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E),
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Get Smart Hint / Next Step", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(
+                    "Get Smart Clay Hint / Next Step",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 13.sp,
+                    color = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E)
+                )
             }
         }
 
@@ -230,20 +258,32 @@ fun PlayScreen(
     if (showNewGameDialog) {
         AlertDialog(
             onDismissRequest = { showNewGameDialog = false },
-            title = { Text("Start New Sudoku Game", fontWeight = FontWeight.Bold) },
+            title = { Text("Start New Clay Game", fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Select puzzle difficulty:")
                     Difficulty.values().forEach { diff ->
-                        Button(
-                            onClick = {
-                                viewModel.generateNewPuzzle(diff, isForPlayMode = true)
-                                showNewGameDialog = false
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .claymorphic(
+                                    shape = RoundedCornerShape(10.dp),
+                                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                                    cornerRadiusDp = 10.dp,
+                                    elevation = 2.dp
+                                )
+                                .bouncyClayClick {
+                                    viewModel.generateNewPuzzle(diff, isForPlayMode = true)
+                                    showNewGameDialog = false
+                                }
                         ) {
-                            Text("${diff.label} (${diff.cluesCount} initial clues)")
+                            Text(
+                                "${diff.label} (${diff.cluesCount} clues)",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
                     }
                 }
@@ -266,22 +306,22 @@ fun PlayScreen(
                     Icon(
                         imageVector = Icons.Default.EmojiEvents,
                         contentDescription = null,
-                        tint = Color(0xFFEAB308),
+                        tint = Color(0xFFF59E0B),
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Puzzle Completed!", fontWeight = FontWeight.Bold)
+                    Text("Clay Puzzle Solved!", fontWeight = FontWeight.Black)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "Congratulations! You completed the ${playDifficulty.label} puzzle in $timeFormatted with $mistakesCount mistakes.",
+                        "Brilliant! You molded the ${playDifficulty.label} puzzle to completion in $timeFormatted with $mistakesCount mistakes.",
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Great job exercising your brain logic!",
+                        "Your claymation brain muscles are in top shape!",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -294,12 +334,12 @@ fun PlayScreen(
                         showNewGameDialog = true
                     }
                 ) {
-                    Text("Play Again")
+                    Text("Play Again", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissWinDialog() }) {
-                    Text("View Board")
+                    Text("Admire Board")
                 }
             }
         )
