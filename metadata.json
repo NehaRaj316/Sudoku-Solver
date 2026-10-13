@@ -1,0 +1,6 @@
+{
+  "name": "Sudoku Solver",
+  "description": "Smart Sudoku solver and interactive player with instant backtracking solver, step-by-step logic breakdown, candidate notes, puzzle generator, and puzzle library.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
