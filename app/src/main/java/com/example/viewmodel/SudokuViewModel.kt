@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.AppDatabase
 import com.example.data.SavedPuzzleEntity
+import com.example.data.ScoreRecordEntity
 import com.example.engine.PresetPuzzle
 import com.example.engine.PuzzleLibrary
 import com.example.engine.SudokuGenerator
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,13 +34,37 @@ enum class AppScreen {
     TECHNIQUES
 }
 
+data class ScoreBreakdown(
+    val baseScore: Int,
+    val speedBonus: Int,
+    val cleanBonus: Int,
+    val difficultyMultiplier: Float,
+    val finalScore: Int,
+    val isNewHighScore: Boolean
+)
+
 class SudokuViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
     private val puzzleDao = db.savedPuzzleDao()
+    private val scoreDao = db.scoreRecordDao()
 
     val savedPuzzles: StateFlow<List<SavedPuzzleEntity>> = puzzleDao.getAllPuzzles()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val scoreRecords: StateFlow<List<ScoreRecordEntity>> = scoreDao.getAllScores()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allTimeHighScore: StateFlow<Int> = scoreDao.getAllTimeHighScore()
+        .map { it ?: 0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val allTimeHighestCombo: StateFlow<Int> = scoreDao.getHighestAllTimeCombo()
+        .map { it ?: 0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val totalWins: StateFlow<Int> = scoreDao.getTotalWins()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     // Navigation Screen
     private val _currentScreen = MutableStateFlow(AppScreen.SOLVER)
@@ -90,7 +116,7 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private val _canRedo = MutableStateFlow(false)
     val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
 
-    // Play Mode state
+    // Play Mode & Gamification state
     private val _playDifficulty = MutableStateFlow(Difficulty.EASY)
     val playDifficulty: StateFlow<Difficulty> = _playDifficulty.asStateFlow()
 
@@ -106,10 +132,40 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     private val _isGameWon = MutableStateFlow(false)
     val isGameWon: StateFlow<Boolean> = _isGameWon.asStateFlow()
 
+    // Gamified Urgency & Scoreboard properties
+    private val _currentScore = MutableStateFlow(0)
+    val currentScore: StateFlow<Int> = _currentScore.asStateFlow()
+
+    private val _comboStreak = MutableStateFlow(0)
+    val comboStreak: StateFlow<Int> = _comboStreak.asStateFlow()
+
+    private val _highestComboInGame = MutableStateFlow(0)
+    val highestComboInGame: StateFlow<Int> = _highestComboInGame.asStateFlow()
+
+    private val _comboMultiplier = MutableStateFlow(1)
+    val comboMultiplier: StateFlow<Int> = _comboMultiplier.asStateFlow()
+
+    private val _isCountdownMode = MutableStateFlow(false)
+    val isCountdownMode: StateFlow<Boolean> = _isCountdownMode.asStateFlow()
+
+    private val _countdownDurationMinutes = MutableStateFlow(8)
+    val countdownDurationMinutes: StateFlow<Int> = _countdownDurationMinutes.asStateFlow()
+
+    private val _countdownRemainingSeconds = MutableStateFlow(480L)
+    val countdownRemainingSeconds: StateFlow<Long> = _countdownRemainingSeconds.asStateFlow()
+
+    private val _isUrgent = MutableStateFlow(false)
+    val isUrgent: StateFlow<Boolean> = _isUrgent.asStateFlow()
+
+    private val _isTimeUp = MutableStateFlow(false)
+    val isTimeUp: StateFlow<Boolean> = _isTimeUp.asStateFlow()
+
+    private val _lastScoreBreakdown = MutableStateFlow<ScoreBreakdown?>(null)
+    val lastScoreBreakdown: StateFlow<ScoreBreakdown?> = _lastScoreBreakdown.asStateFlow()
+
     private var timerJob: Job? = null
 
     init {
-        // Start with a gentle starter preset on first launch
         loadPreset(PuzzleLibrary.presets.first(), false)
         startTimer()
     }
@@ -155,7 +211,6 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         val c = _selectedCol.value
         val currentCell = _cells.value[r][c]
 
-        // If in Play mode and cell is given clue, cannot edit
         if (_currentScreen.value == AppScreen.PLAY && currentCell.isGiven) {
             return
         }
@@ -168,12 +223,39 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
             val isCurrent = (currentCell.value == digit)
             val newValue = if (isCurrent) 0 else digit
 
-            // In Play mode, check if placing a wrong digit causes a mistake
+            // Gamified scoring check in Play Mode
             if (_currentScreen.value == AppScreen.PLAY && newValue != 0) {
                 val grid = toIntArrayGrid(_cells.value)
                 val solved = SudokuSolver.solve(grid)
-                if (solved.solvedGrid != null && solved.solvedGrid[r][c] != newValue) {
-                    _mistakesCount.value += 1
+
+                if (solved.solvedGrid != null) {
+                    val correctDigit = solved.solvedGrid[r][c]
+                    if (newValue == correctDigit) {
+                        // Correct Placement: increment streak and add score!
+                        _comboStreak.value += 1
+                        if (_comboStreak.value > _highestComboInGame.value) {
+                            _highestComboInGame.value = _comboStreak.value
+                        }
+
+                        // Calculate combo multiplier
+                        val mult = when {
+                            _comboStreak.value >= 15 -> 5
+                            _comboStreak.value >= 10 -> 4
+                            _comboStreak.value >= 6 -> 3
+                            _comboStreak.value >= 3 -> 2
+                            else -> 1
+                        }
+                        _comboMultiplier.value = mult
+
+                        val points = 100 * mult
+                        _currentScore.value += points
+                    } else {
+                        // Wrong Placement: break combo streak and apply penalty
+                        _mistakesCount.value += 1
+                        _comboStreak.value = 0
+                        _comboMultiplier.value = 1
+                        _currentScore.value = maxOf(0, _currentScore.value - 50)
+                    }
                 }
             }
 
@@ -206,7 +288,6 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun cleanIntersectingNotes(board: MutableList<MutableList<Cell>>, r: Int, c: Int, digit: Int) {
-        // Row & Col
         for (i in 0 until 9) {
             if (board[r][i].notes.contains(digit)) {
                 board[r][i] = board[r][i].copy(notes = board[r][i].notes - digit)
@@ -215,7 +296,6 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
                 board[i][c] = board[i][c].copy(notes = board[i][c].notes - digit)
             }
         }
-        // Box
         val br = (r / 3) * 3
         val bc = (c / 3) * 3
         for (row in br until br + 3) {
@@ -298,6 +378,11 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
     fun requestStep() {
         stopAnimation()
+        // Deduct small hint penalty in Play Mode
+        if (_currentScreen.value == AppScreen.PLAY) {
+            _currentScore.value = maxOf(0, _currentScore.value - 75)
+        }
+
         val currentGrid = toIntArrayGrid(_cells.value)
         val step = SudokuLogicalSolver.findNextStep(currentGrid)
         _stepExplanation.value = step
@@ -488,8 +573,57 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         if (_currentScreen.value == AppScreen.PLAY) {
             val grid = toIntArrayGrid(_cells.value)
             if (SudokuValidator.isBoardComplete(grid)) {
-                _isGameWon.value = true
                 pauseTimer()
+                _isGameWon.value = true
+
+                // Calculate End-Game Gamified Score
+                val base = _currentScore.value
+                val cleanBonus = if (_mistakesCount.value == 0) 1000 else 0
+                val speedBonus = if (_isCountdownMode.value) {
+                    (_countdownRemainingSeconds.value * 25).toInt()
+                } else {
+                    val parTime = getParTimeSeconds(_playDifficulty.value)
+                    val diff = parTime - _timerSeconds.value
+                    if (diff > 0) (diff * 10).toInt() else 0
+                }
+
+                val diffMult = when (_playDifficulty.value) {
+                    Difficulty.EASY -> 1.0f
+                    Difficulty.MEDIUM -> 1.5f
+                    Difficulty.HARD -> 2.0f
+                    Difficulty.EXPERT -> 2.5f
+                    Difficulty.EVIL -> 3.0f
+                }
+
+                val finalScore = ((base + speedBonus + cleanBonus) * diffMult).toInt()
+                val isHighScore = finalScore > allTimeHighScore.value
+
+                _lastScoreBreakdown.value = ScoreBreakdown(
+                    baseScore = base,
+                    speedBonus = speedBonus,
+                    cleanBonus = cleanBonus,
+                    difficultyMultiplier = diffMult,
+                    finalScore = finalScore,
+                    isNewHighScore = isHighScore
+                )
+
+                // Persist score to Room
+                viewModelScope.launch {
+                    scoreDao.insertScore(
+                        ScoreRecordEntity(
+                            difficulty = _playDifficulty.value.label,
+                            score = finalScore,
+                            timeSeconds = if (_isCountdownMode.value) {
+                                (_countdownDurationMinutes.value * 60) - _countdownRemainingSeconds.value
+                            } else {
+                                _timerSeconds.value
+                            },
+                            mistakes = _mistakesCount.value,
+                            highestCombo = _highestComboInGame.value,
+                            isWin = true
+                        )
+                    )
+                }
             }
         }
     }
@@ -498,20 +632,61 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
         _isGameWon.value = false
     }
 
+    fun dismissTimeUpDialog() {
+        _isTimeUp.value = false
+    }
+
     private fun resetGameStats() {
         _mistakesCount.value = 0
         _timerSeconds.value = 0
         _isGameWon.value = false
+        _isTimeUp.value = false
+        _currentScore.value = 0
+        _comboStreak.value = 0
+        _highestComboInGame.value = 0
+        _comboMultiplier.value = 1
+        _isUrgent.value = false
+
+        if (_isCountdownMode.value) {
+            _countdownRemainingSeconds.value = (_countdownDurationMinutes.value * 60).toLong()
+        }
+        startTimer()
+    }
+
+    fun setTimerMode(isCountdown: Boolean, durationMinutes: Int) {
+        pauseTimer()
+        _isCountdownMode.value = isCountdown
+        if (isCountdown && durationMinutes > 0) {
+            _countdownDurationMinutes.value = durationMinutes
+            _countdownRemainingSeconds.value = (durationMinutes * 60).toLong()
+        }
+        _isUrgent.value = false
+        _isTimeUp.value = false
         startTimer()
     }
 
     fun startTimer() {
         if (_isTimerRunning.value) return
         _isTimerRunning.value = true
+
         timerJob = viewModelScope.launch {
             while (_isTimerRunning.value) {
                 delay(1000L)
-                _timerSeconds.value += 1
+                if (_isCountdownMode.value) {
+                    if (_countdownRemainingSeconds.value > 0) {
+                        _countdownRemainingSeconds.value -= 1
+                        _isUrgent.value = (_countdownRemainingSeconds.value <= 60L)
+                    } else {
+                        // Time attack reached 0!
+                        _isTimerRunning.value = false
+                        _isUrgent.value = false
+                        _isTimeUp.value = true
+                    }
+                } else {
+                    _timerSeconds.value += 1
+                    val par = getParTimeSeconds(_playDifficulty.value)
+                    _isUrgent.value = (_timerSeconds.value >= par * 0.85f)
+                }
             }
         }
     }
@@ -524,6 +699,33 @@ class SudokuViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleTimer() {
         if (_isTimerRunning.value) pauseTimer() else startTimer()
+    }
+
+    fun getParTimeSeconds(difficulty: Difficulty): Long {
+        return when (difficulty) {
+            Difficulty.EASY -> 300L // 5 mins
+            Difficulty.MEDIUM -> 480L // 8 mins
+            Difficulty.HARD -> 720L // 12 mins
+            Difficulty.EXPERT -> 900L // 15 mins
+            Difficulty.EVIL -> 1200L // 20 mins
+        }
+    }
+
+    fun getFormattedTime(): String {
+        val totalSecs = if (_isCountdownMode.value) _countdownRemainingSeconds.value else _timerSeconds.value
+        val m = totalSecs / 60
+        val s = totalSecs % 60
+        return "%02d:%02d".format(m, s)
+    }
+
+    fun getProgressFraction(): Float {
+        return if (_isCountdownMode.value) {
+            val total = (_countdownDurationMinutes.value * 60).toFloat()
+            if (total > 0) (_countdownRemainingSeconds.value.toFloat() / total).coerceIn(0f, 1f) else 0f
+        } else {
+            val par = getParTimeSeconds(_playDifficulty.value).toFloat()
+            (_timerSeconds.value.toFloat() / par).coerceIn(0f, 1f)
+        }
     }
 
     fun saveCurrentBoard(title: String) {

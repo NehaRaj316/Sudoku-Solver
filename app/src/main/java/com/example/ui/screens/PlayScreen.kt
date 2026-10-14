@@ -18,14 +18,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.HourglassDisabled
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Difficulty
+import com.example.ui.components.ClayScoreboardDialog
+import com.example.ui.components.ClayTimerScoreboard
 import com.example.ui.components.Keypad
 import com.example.ui.components.StepExplanationCard
 import com.example.ui.components.SudokuGrid
@@ -63,19 +64,27 @@ fun PlayScreen(
     val canUndo by viewModel.canUndo.collectAsState()
     val canRedo by viewModel.canRedo.collectAsState()
     val playDifficulty by viewModel.playDifficulty.collectAsState()
-    val timerSeconds by viewModel.timerSeconds.collectAsState()
     val isTimerRunning by viewModel.isTimerRunning.collectAsState()
     val mistakesCount by viewModel.mistakesCount.collectAsState()
     val isGameWon by viewModel.isGameWon.collectAsState()
+    val isTimeUp by viewModel.isTimeUp.collectAsState()
+    val isUrgent by viewModel.isUrgent.collectAsState()
+    val isCountdownMode by viewModel.isCountdownMode.collectAsState()
+    val countdownDurationMinutes by viewModel.countdownDurationMinutes.collectAsState()
+    val currentScore by viewModel.currentScore.collectAsState()
+    val comboStreak by viewModel.comboStreak.collectAsState()
+    val comboMultiplier by viewModel.comboMultiplier.collectAsState()
+    val highScore by viewModel.allTimeHighScore.collectAsState()
+    val allTimeHighestCombo by viewModel.allTimeHighestCombo.collectAsState()
+    val totalWins by viewModel.totalWins.collectAsState()
+    val scoreRecords by viewModel.scoreRecords.collectAsState()
+    val lastScoreBreakdown by viewModel.lastScoreBreakdown.collectAsState()
     val stepExplanation by viewModel.stepExplanation.collectAsState()
 
     var showNewGameDialog by remember { mutableStateOf(false) }
+    var showScoreboardDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val isDark = isSystemInDarkTheme()
-
-    val minutes = timerSeconds / 60
-    val seconds = timerSeconds % 60
-    val timeFormatted = "%02d:%02d".format(minutes, seconds)
 
     val hudBg = if (isDark) Color(0xFF26201B) else Color(0xFFFFFDF9)
 
@@ -86,17 +95,31 @@ fun PlayScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Clay Play HUD Header
+        // Clay Urgency Timer & Scoreboard Tracker Pods
+        ClayTimerScoreboard(
+            timeFormatted = viewModel.getFormattedTime(),
+            isTimerRunning = isTimerRunning,
+            isCountdownMode = isCountdownMode,
+            progressFraction = viewModel.getProgressFraction(),
+            isUrgent = isUrgent,
+            score = currentScore,
+            comboStreak = comboStreak,
+            comboMultiplier = comboMultiplier,
+            onToggleTimer = { viewModel.toggleTimer() },
+            onOpenScoreboard = { showScoreboardDialog = true }
+        )
+
+        // Difficulty & Mistakes Row
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .claymorphic(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     backgroundColor = hudBg,
-                    cornerRadiusDp = 16.dp,
-                    elevation = 4.dp
+                    cornerRadiusDp = 14.dp,
+                    elevation = 3.dp
                 )
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -109,34 +132,11 @@ fun PlayScreen(
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = playDifficulty.label,
+                        text = "${playDifficulty.label} Tier",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-
-                // Timer with play/pause
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { viewModel.toggleTimer() },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Toggle Timer",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(19.dp)
-                        )
-                    }
-                    Text(
-                        text = timeFormatted,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -153,7 +153,7 @@ fun PlayScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Mistakes: $mistakesCount",
-                        fontSize = 12.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (mistakesCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -171,7 +171,7 @@ fun PlayScreen(
                             elevation = 2.dp
                         )
                         .bouncyClayClick { showNewGameDialog = true }
-                        .padding(horizontal = 8.dp)
+                        .padding(horizontal = 10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -180,10 +180,10 @@ fun PlayScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
-                        Spacer(modifier = Modifier.width(2.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
                         Text(
                             "New",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -224,7 +224,7 @@ fun PlayScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Get Smart Clay Hint / Next Step",
+                    "Get Smart Clay Hint (-75 pts)",
                     fontWeight = FontWeight.Black,
                     fontSize = 13.sp,
                     color = if (isDark) Color(0xFFFDE68A) else Color(0xFF92400E)
@@ -252,6 +252,24 @@ fun PlayScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    // Scoreboard & Statistics Modal
+    if (showScoreboardDialog) {
+        ClayScoreboardDialog(
+            currentScore = currentScore,
+            highScore = highScore,
+            highestCombo = allTimeHighestCombo,
+            totalWins = totalWins,
+            isCountdownMode = isCountdownMode,
+            countdownDurationMinutes = countdownDurationMinutes,
+            records = scoreRecords,
+            onSelectTimerMode = { isCountdown, durationMinutes ->
+                viewModel.setTimerMode(isCountdown, durationMinutes)
+                showScoreboardDialog = false
+            },
+            onDismiss = { showScoreboardDialog = false }
+        )
     }
 
     // New Game Dialog
@@ -297,8 +315,62 @@ fun PlayScreen(
         )
     }
 
-    // Win Celebration Dialog
+    // Time's Up Urgency Challenge Dialog
+    if (isTimeUp) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissTimeUpDialog() },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.HourglassDisabled,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Time's Up!", fontWeight = FontWeight.Black)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "The clay timer reached zero in Time Attack challenge mode!",
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        "Score achieved: $currentScore pts with a peak combo of ${viewModel.highestComboInGame.value}x.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.dismissTimeUpDialog()
+                        viewModel.generateNewPuzzle(playDifficulty, isForPlayMode = true)
+                    }
+                ) {
+                    Text("Try Again", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.dismissTimeUpDialog()
+                        viewModel.setTimerMode(false, 0) // switch to relaxed stopwatch
+                    }
+                ) {
+                    Text("Keep Playing (Relaxed)")
+                }
+            }
+        )
+    }
+
+    // Gamified Win Celebration Dialog with Score Breakdown
     if (isGameWon) {
+        val breakdown = lastScoreBreakdown
         AlertDialog(
             onDismissRequest = { viewModel.dismissWinDialog() },
             title = {
@@ -307,22 +379,65 @@ fun PlayScreen(
                         imageVector = Icons.Default.EmojiEvents,
                         contentDescription = null,
                         tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Clay Puzzle Solved!", fontWeight = FontWeight.Black)
+                    Column {
+                        Text("Puzzle Solved!", fontWeight = FontWeight.Black, fontSize = 20.sp)
+                        if (breakdown?.isNewHighScore == true) {
+                            Text("⭐ NEW CLAY HIGH SCORE! ⭐", fontSize = 11.5.sp, fontWeight = FontWeight.Black, color = Color(0xFFEA580C))
+                        }
+                    }
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        "Brilliant! You molded the ${playDifficulty.label} puzzle to completion in $timeFormatted with $mistakesCount mistakes.",
-                        fontSize = 14.sp
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Final Score Hero Pill
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("TOTAL SCORE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(
+                                text = "${breakdown?.finalScore ?: currentScore} PTS",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+
+                    if (breakdown != null) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Base Move Points:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("+${breakdown.baseScore}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Speed Time Bonus:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("+${breakdown.speedBonus}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (breakdown.cleanBonus > 0) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Clean Game Bonus (0 mistakes):", fontSize = 12.sp, color = Color(0xFF166534))
+                                Text("+${breakdown.cleanBonus}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF166534))
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Difficulty Multiplier (${playDifficulty.label}):", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("x${breakdown.difficultyMultiplier}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Your claymation brain muscles are in top shape!",
-                        fontSize = 13.sp,
+                        "Time: ${viewModel.getFormattedTime()} • Mistakes: $mistakesCount • Max Combo: ${viewModel.highestComboInGame.value}x",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -339,7 +454,7 @@ fun PlayScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissWinDialog() }) {
-                    Text("Admire Board")
+                    Text("View Board")
                 }
             }
         )
